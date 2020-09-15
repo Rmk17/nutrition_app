@@ -2,7 +2,6 @@ from flask import Flask, render_template, g, request
 from datetime import datetime
 from database import get_db, connect_db
 
-
 app = Flask(__name__)
 
 
@@ -22,17 +21,31 @@ def index():
         db.execute('insert into log_date (entry_date) values (?)', [database_date])
         db.commit()
 
+    """
     cur = db.execute('select log_date.entry_date, sum(food.protein) as protein, '
                      'sum(food.carbohydrates) as carbohydrates, sum(food.fat) as fat, sum(food.calories) as calories '
                      'from food_date join log_date on log_date.id = food_date.log_date_id '
                      'join food on food.id = food_date.food_id '
                      'group by log_date.id '
-                     'union '                     
+                     'union '
                      'select log_date.entry_date, 0, 0, 0, 0 from log_date '
                      'where log_date.id not in (select log_date.id from food_date join log_date on '
-                     'food_date.log_date_id = log_date.id) '                     
-                     'order by log_date.entry_date desc'
-                     )
+                     'food_date.log_date_id = log_date.id) '
+                     'order by log_date.entry_date desc')
+    """
+
+    cur = db.execute('select '
+                     'log_date.entry_date, '
+                     'sum(food.protein) as protein, '
+                     'sum(food.carbohydrates) as carbohydrates, '
+                     'sum(food.fat) as fat, '
+                     'sum(food.calories) as calories '
+                     'from '
+                     'log_date '
+                     'left join food_date on food_date.log_date_id = log_date.id '
+                     'left join food on food.id = food_date.food_id '
+                     'group by log_date.id order by log_date.entry_date desc')
+
     # cur = db.execute('select entry_date from log_date order by entry_date desc')
     results = cur.fetchall()
 
